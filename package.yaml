@@ -1,0 +1,8 @@
+name: "fins_joystick_solver"
+version: "0.1.0"
+description: "Joystick axes to motion/servo/gripper math solver"
+maintainers:
+  - name: "Your Name"
+    email: "your.email@example.com"
+licenses:
+  - "MIT"

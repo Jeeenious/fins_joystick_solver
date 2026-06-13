@@ -1,0 +1,18 @@
+# ==============================================================================
+# speed_control 速度解算参数
+# ==============================================================================
+control:
+  direction_threshold: 0.1
+  depth_threshold: 0.2
+  rotate_threshold: 0.2
+  max_speed: 99
+
+servo:
+  pwm_min: 500
+  pwm_max: 2500
+  pwm_initial: 1500
+  step: 20
+
+gripper:
+  close_button: 4
+  open_button: 5
