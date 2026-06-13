@@ -16,6 +16,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${pybind11_INCLUDE_DIRS}
 )
 
+target_link_options(${PROJECT_NAME} PRIVATE -rdynamic)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
   pybind11::embed
   Python3::Python

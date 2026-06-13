@@ -18,7 +18,7 @@ public:
   void define() override {
     set_name("MotionSolver");
     set_description("摇杆轴值 → 运动推力百分比");
-    set_category("Robot");
+    set_category("JoystickSolver");
     register_input<std::string>("axes", &MotionSolver::on_axes);
     register_output<std::string>("motion");
   }
@@ -52,9 +52,9 @@ public:
   void define() override {
     set_name("ServoSolver");
     set_description("十字键 → 舵机 PWM 增量解算");
-    set_category("Robot");
+    set_category("JoystickSolver");
     register_input<std::string>("hat", &ServoSolver::on_hat);
-    register_output<std::string>("servo");
+    register_output<std::string>("motion");
   }
   void initialize() override {
     logger->info("ServoSolver 初始化.");
@@ -92,7 +92,7 @@ public:
   void define() override {
     set_name("GripperSolver");
     set_description("按钮 → 夹爪方向解算");
-    set_category("Robot");
+    set_category("JoystickSolver");
     register_input<std::string>("buttons", &GripperSolver::on_buttons);
     register_output<std::string>("gripper");
   }
