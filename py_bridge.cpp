@@ -13,7 +13,8 @@ void py_bridge::init() {
   if (inited) return;
   inited = true;
 
-  py::initialize_interpreter();
+  if (!Py_IsInitialized())
+    py::initialize_interpreter();
 
   py::module_ sys = py::module_::import("sys");
   py::list path = sys.attr("path");
@@ -28,23 +29,31 @@ void py_bridge::init() {
   }
 }
 
-std::string py_bridge::solve_motion(float lh, float lv, float rh, float rv) {
+void py_bridge::solve_motion(float lh, float lv, float rh, float rv,
+                             int &x, int &y, int &yaw, int &depth) {
   init();
   py::module_ m = py::module_::import("solver_py.solver");
   py::dict r = m.attr("solve_motion")(lh, lv, rh, rv);
-  return std::to_string(r["x_pct"].cast<int>()) + "," +
-         std::to_string(r["y_pct"].cast<int>()) + "," +
-         std::to_string(r["yaw_rate_cmd"].cast<int>()) + "," +
-         std::to_string(r["depth_force_cmd"].cast<int>());
+  x     = r["x_pct"].cast<int>();
+  y     = r["y_pct"].cast<int>();
+  yaw   = r["yaw_rate_cmd"].cast<int>();
+  depth = r["depth_force_cmd"].cast<int>();
 }
 
-bool py_bridge::solve_servo(int hat_x, int hat_y, int &pwm_x, int &pwm_y) {
+bool py_bridge::solve_servo_x(int hat_y, int &pwm) {
   init();
   py::module_ m = py::module_::import("solver_py.solver");
-  py::tuple r = m.attr("solve_servo")(hat_x, hat_y, pwm_x, pwm_y);
-  pwm_x = r[0].cast<int>();
-  pwm_y = r[1].cast<int>();
-  return r[2].cast<bool>();
+  py::tuple r = m.attr("solve_servo_x")(hat_y, pwm);
+  pwm = r[0].cast<int>();
+  return r[1].cast<bool>();
+}
+
+bool py_bridge::solve_servo_y(int hat_x, int &pwm) {
+  init();
+  py::module_ m = py::module_::import("solver_py.solver");
+  py::tuple r = m.attr("solve_servo_y")(hat_x, pwm);
+  pwm = r[0].cast<int>();
+  return r[1].cast<bool>();
 }
 
 int py_bridge::solve_gripper(bool close_btn, bool open_btn) {

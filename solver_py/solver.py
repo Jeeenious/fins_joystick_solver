@@ -27,21 +27,22 @@ def solve_motion(leftH, leftV, rightH, rightV):
     }
 
 
-def solve_servo(hat_x, hat_y, pwm_x, pwm_y):
-    changed = False
+def solve_servo_x(hat_y, pwm):
+    """hat_y=-1/0/1 → pwm_x 增量"""
     if hat_y == 1:
-        pwm_x = min(pwm_x + SERVO_STEP, PWM_MAX)
-        changed = True
+        return min(pwm + SERVO_STEP, PWM_MAX), True
     elif hat_y == -1:
-        pwm_x = max(pwm_x - SERVO_STEP, PWM_MIN)
-        changed = True
+        return max(pwm - SERVO_STEP, PWM_MIN), True
+    return pwm, False
+
+
+def solve_servo_y(hat_x, pwm):
+    """hat_x=-1/0/1 → pwm_y 增量"""
     if hat_x == 1:
-        pwm_y = min(pwm_y + SERVO_STEP, PWM_MAX)
-        changed = True
+        return min(pwm + SERVO_STEP, PWM_MAX), True
     elif hat_x == -1:
-        pwm_y = max(pwm_y - SERVO_STEP, PWM_MIN)
-        changed = True
-    return pwm_x, pwm_y, changed
+        return max(pwm - SERVO_STEP, PWM_MIN), True
+    return pwm, False
 
 
 def solve_gripper(close_pressed, open_pressed):
