@@ -11,7 +11,7 @@
 #pragma once
 
 #include <fins/node.hpp>
-#include "py_bridge.hpp"
+#include "solve.h"
 
 // ──────────── MotionSolver ────────────
 class MotionSolver : public fins::Node {
@@ -36,15 +36,19 @@ public:
   void pause() override     { logger->info("MotionSolver 暂停."); }
   void reset() override     { logger->info("MotionSolver 重置."); }
 
-  void on_lh(const float &v, fins::AcqTime) { lh_=v; try_send(); }
-  void on_lv(const float &v, fins::AcqTime) { lv_=v; try_send(); }
-  void on_rh(const float &v, fins::AcqTime) { rh_=v; try_send(); }
-  void on_rv(const float &v, fins::AcqTime) { rv_=v; try_send(); }
+  void on_lh(const float &v, fins::AcqTime) { lh_=v; mask_|=1; try_send(); }
+  void on_lv(const float &v, fins::AcqTime) { lv_=v; mask_|=2; try_send(); }
+  void on_rh(const float &v, fins::AcqTime) { rh_=v; mask_|=4; try_send(); }
+  void on_rv(const float &v, fins::AcqTime) { rv_=v; mask_|=8; try_send(); }
 private:
   float lh_, lv_, rh_, rv_;
+  int mask_ = 0;
   void try_send() {
+    if (mask_ != 15) return;  // 四值到齐才发一次
+    mask_ = 0;
     int x, y, yaw, depth;
-    py_bridge::solve_motion(lh_, lv_, rh_, rv_, x, y, yaw, depth);
+    solve::solve_motion(lh_, lv_, rh_, rv_, x, y, yaw, depth);
+    logger->info("Motion: x={} y={} yaw={} depth={}", x, y, yaw, depth);
     send("x", x);
     send("y", y);
     send("yaw", yaw);
@@ -71,11 +75,15 @@ public:
   void reset() override     { logger->info("ServoXSolver 重置."); }
 
   void on_hat_y(const int &y, fins::AcqTime) {
-    if (py_bridge::solve_servo_x(y, pwm_))
+    if (y == last_hat_y_) return;
+    last_hat_y_ = y;
+    if (solve::solve_servo_x(y, pwm_)) {
+      logger->info("ServoX: hat_y={} pwm={}", y, pwm_);
       send("pwm_x", pwm_);
+    }
   }
 private:
-  int pwm_;
+  int pwm_, last_hat_y_ = -2;
 };
 EXPORT_NODE(ServoXSolver)
 
@@ -97,11 +105,15 @@ public:
   void reset() override     { logger->info("ServoYSolver 重置."); }
 
   void on_hat_x(const int &x, fins::AcqTime) {
-    if (py_bridge::solve_servo_y(x, pwm_))
+    if (x == last_hat_x_) return;
+    last_hat_x_ = x;
+    if (solve::solve_servo_y(x, pwm_)) {
+      logger->info("ServoY: hat_x={} pwm={}", x, pwm_);
       send("pwm_y", pwm_);
+    }
   }
 private:
-  int pwm_;
+  int pwm_, last_hat_x_ = -2;
 };
 EXPORT_NODE(ServoYSolver)
 
@@ -123,12 +135,14 @@ public:
   void pause() override     { logger->info("GripperSolver 暂停."); }
   void reset() override     { logger->info("GripperSolver 重置."); }
 
-  void on_btn_4(const bool &pressed, fins::AcqTime) { close_ = pressed; try_send(); }
-  void on_btn_5(const bool &pressed, fins::AcqTime) { open_  = pressed; try_send(); }
+  void on_btn_4(const bool &pressed, fins::AcqTime) { if (pressed==close_) return; close_ = pressed; try_send(); }
+  void on_btn_5(const bool &pressed, fins::AcqTime) { if (pressed==open_)  return; open_  = pressed; try_send(); }
 private:
   bool close_, open_;
   void try_send() {
-    send("direction", py_bridge::solve_gripper(close_, open_));
+    int dir = solve::solve_gripper(close_, open_);
+    logger->info("Gripper: close={} open={} direction={}", close_, open_, dir);
+    send("direction", dir);
   }
 };
 EXPORT_NODE(GripperSolver)
